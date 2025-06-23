@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Чат-бот парикмахерской</title>
+  <style>
+  body {
+    background: linear-gradient(135deg, #fde0e0, #c7eaff);
+    min-height: 100vh;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .chat-container {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    max-width: 420px;
+    width: 100%;
+    padding: 24px 20px 16px;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    max-height: 90vh;
+    position: relative;
+  }
+
+  .chat-title {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #2d3748;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    min-height: 0;
+  }
+
+  .input-container {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding-top: 16px;
+    margin-top: auto;
+    width: 100%;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .suggestions-wrapper {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+
+  #fixed-suggestions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .msg {
+    margin: 12px 0;
+    display: flex;
+    align-items: flex-end;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .msg.bot { justify-content: flex-start; }
+  .msg.user { justify-content: flex-end; }
+
+  .msg-text {
+    padding: 12px 16px;
+    border-radius: 18px;
+    max-width: 85%;
+    word-break: break-word;
+    font-size: 1rem;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .msg.bot .msg-text {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    color: #334155;
+    border-bottom-left-radius: 6px;
+  }
+
+  .msg.user .msg-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border-bottom-right-radius: 6px;
+  }
+
+  .chat-form {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    align-items: stretch;
+  }
+
+  .chat-input {
+    flex: 1;
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    font-size: 1rem;
+    padding: 12px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+    font-family: inherit;
+  }
+
+  .chat-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .chat-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    min-width: 60px;
+  }
+
+  .chat-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  }
+
+  .chat-btn:active {
+    transform: translateY(0);
+  }
+
+  .suggestions-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    justify-content: flex-start;
+    animation: slideIn 0.4s ease-out;
+  }
+
+  .suggestion-btn,
+  .suggestion-date-btn {
+    background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+    border: 2px solid transparent;
+    border-radius: 14px;
+    box-shadow: 0 3px 10px rgba(3, 169, 244, 0.15);
+    padding: 10px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    font-weight: 500;
+    color: #0277bd;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .suggestion-btn:hover,
+  .suggestion-btn:focus,
+  .suggestion-date-btn:hover,
+  .suggestion-date-btn:focus {
+    background: linear-gradient(135deg, #03a9f4 0%, #0277bd 100%);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(3, 169, 244, 0.3);
+  }
+
+  .calendar-row {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .calendar-row input[type="date"] {
+    flex: 1;
+    min-width: 160px;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #fff;
+    color: #334155;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .calendar-row input[type="date"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .calendar-row input[type="date"]::-webkit-calendar-picker-indicator {
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233b82f6'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e") no-repeat;
+    background-size: 20px 20px;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+  }
+
+  .suggestion-back-btn {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+    border: 2px solid #f87171;
+    color: #dc2626;
+    border-radius: 14px;
+    font-size: 1rem;
+    padding: 10px 18px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+    font-family: inherit;
+    font-weight: 500;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .suggestion-back-btn:hover,
+  .suggestion-back-btn:focus {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+  }
+
+  /* Мобильная адаптация */
+  @media (max-width: 480px) {
+    body {
+      background: #f8fafc;
+      padding: 0;
+      margin: 0;
+      align-items: stretch;
+    }
+
+    .chat-container {
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+      padding: 20px 16px 12px;
+    }
+
+    .chat-title {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+
+    .chat-box {
+      padding: 16px 12px;
+      margin-bottom: 12px;
+    }
+
+    .input-container {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .msg-text {
+      font-size: 1rem;
+      padding: 12px 16px;
+      max-width: 90%;
+    }
+
+    .chat-input {
+      font-size: 16px;
+      padding: 14px 16px;
+    }
+
+    .chat-btn {
+      padding: 14px 18px;
+      font-size: 1.1rem;
+      min-width: 56px;
+    }
+
+    .suggestions-panel {
+      flex-direction: column;
+      width: 100%;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .suggestion-btn,
+    .suggestion-back-btn,
+    .suggestion-date-btn {
+      font-size: 1rem;
+      padding: 16px;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 52px;
+    }
+
+    .calendar-row {
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .calendar-row input[type="date"] {
+      width: 100%;
+      min-width: unset;
+      padding: 16px;
+      font-size: 16px;
+      min-height: 52px;
+    }
+
+    .calendar-row .suggestion-btn {
+      width: 100%;
+      margin-top: 0;
+    }
+  }
+
+  /* Очень маленькие экраны */
+  @media (max-width: 360px) {
+    .chat-container {
+      padding: 16px 12px 8px;
+    }
+
+    .chat-title {
+      font-size: 1.3rem;
+    }
+
+    .chat-box {
+      padding: 12px 8px;
+    }
+
+    .msg-text {
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+
+    .suggestion-btn,
+    .suggestion-back-btn,
+    .suggestion-date-btn {
+      padding: 14px 12px;
+      font-size: 0.95rem;
+    }
+
+    .calendar-row input[type="date"] {
+      padding: 14px 12px;
+      font-size: 16px;
+    }
+  }
+
+  /* Большие экраны */
+  @media (min-width: 768px) {
+    .chat-container {
+      max-width: 500px;
+      padding: 32px 24px 20px;
+    }
+
+    .chat-title {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+
+    .chat-box {
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .msg {
+      margin: 16px 0;
+    }
+
+    .msg-text {
+      padding: 14px 18px;
+      font-size: 1.1rem;
+    }
+
+    .chat-input {
+      padding: 14px 18px;
+      font-size: 1.1rem;
+    }
+
+    .chat-btn {
+      padding: 14px 24px;
+      font-size: 1.2rem;
+    }
+
+    .suggestion-btn,
+    .suggestion-date-btn {
+      padding: 12px 20px;
+      font-size: 1.1rem;
+    }
+
+    .suggestion-back-btn {
+      padding: 12px 20px;
+      font-size: 1.1rem;
+    }
+
+    .calendar-row input[type="date"] {
+      padding: 14px 18px;
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Темная тема */
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: linear-gradient(135deg, #1a202c, #2d3748);
+    }
+
+    .chat-container {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+
+    .chat-box {
+      background: #1a202c;
+      border-color: #4a5568;
+    }
+
+    .msg.bot .msg-text {
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+      color: #e2e8f0;
+    }
+
+    .chat-input {
+      background: #1a202c;
+      border-color: #4a5568;
+      color: #e2e8f0;
+    }
+
+    .chat-input:focus {
+      border-color: #63b3ed;
+    }
+
+    .calendar-row input[type="date"] {
+      background: #1a202c;
+      border-color: #4a5568;
+      color: #e2e8f0;
+    }
+
+    .calendar-row input[type="date"]:focus {
+      border-color: #63b3ed;
+    }
+
+    .input-container {
+      background: #2d3748;
+      border-top-color: #4a5568;
+    }
+  }
+
+  /* Анимации */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Скроллбар */
+  .chat-box::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .chat-box::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  .chat-box::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  .chat-box::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .suggestions-wrapper::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .suggestions-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  .suggestions-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+</style>
+  <!-- Подключаем библиотеку supabase ПЕРВОЙ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-title">Чат-бот парикмахерской</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div id="fixed-suggestions"></div> <!-- Вот тут! -->
+    <form class="chat-form" id="chatForm" autocomplete="off">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Введите сообщение..." autofocus>
+      <button type="submit" class="chat-btn">➤</button>
+    </form>
+  </div>
+  <!-- Весь остальной JS только ниже, после DOM и после supabase-js -->
+  <script>
+
+ // Supabase init (замени ключи на свои!)
+const supa = supabase.createClient(
+  'https://bmaypefwycendocuyqvj.supabase.co', 
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtYXlwZWZ3eWNlbmRvY3V5cXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MTQyNzYsImV4cCI6MjA2NjE5MDI3Nn0.PJqTJ8079mkZZaAGDrw6rvjhxuZSCBiAQTGa_lRLMBw'
+);
+
+const stylists = ["Анна", "Иван", "Мария"];
+const services = ["Стрижка", "Окрашивание", "Укладка"];
+
+function formatToIso(date) {
+  if (date instanceof Date) {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+  if (typeof date === 'string' && /^\d{2}[.\-]\d{2}[.\-]\d{4}$/.test(date)) {
+    const [d, m, y] = date.split(/[.\-]/);
+    return `${y}-${m}-${d}`;
+  }
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,"0");
+  const dd = String(now.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// Формируем список слотов в виде "HH:MM"
+function getTimeSlots(start = "10:00", end = "18:00") {
+  const slots = [];
+  let [h, m] = start.split(":").map(Number);
+  let [eh, em] = end.split(":").map(Number);
+  while (h < eh || (h === eh && m < em)) {
+    slots.push((h < 10 ? "0" : "") + h + ":" + (m === 0 ? "00" : m));
+    m += 30;
+    if (m === 60) { h++; m = 0; }
+  }
+  if (slots.length > 0) slots.pop();
+  return slots;
+}
+
+// Формат времени для БД ("10:00" -> "10:00:00")
+function formatTimeForDb(str) {
+  if (/^\d{1,2}:\d{2}$/.test(str)) return str + ":00";
+  if (/^\d{1,2}:\d{2}:\d{2}$/.test(str)) return str;
+  return "00:00:00";
+}
+
+let step = 0;
+let data = {};
+let calendarOpen = false;
+let busy = false;
+
+const chatBox = document.getElementById('chatBox');
+const chatForm = document.getElementById('chatForm');
+const chatInput = document.getElementById('chatInput');
+const suggestionsPanel = document.getElementById('fixed-suggestions');
+
+// ========== UI и утилиты ==========
+
+function clearSuggestions() {
+  suggestionsPanel.innerHTML = "";
+  calendarOpen = false;
+}
+
+function showSuggestions(buttons = [], { back = true, calendar = false, calendarCallback = null } = {}) {
+  clearSuggestions();
+  const panel = document.createElement('div');
+  panel.className = 'suggestions-panel';
+
+  if (Array.isArray(buttons) && buttons.length > 0) {
+    buttons.forEach(val => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'suggestion-btn';
+      btn.textContent = val;
+      btn.onclick = async () => {
+        if (busy) return;
+        busy = true;
+        await processInput(val);
+        busy = false;
+      };
+      panel.appendChild(btn);
+    });
+  }
+
+  if (calendar) {
+    const row = document.createElement('div');
+    row.className = 'calendar-row';
+    const inp = document.createElement('input');
+    inp.type = 'date';
+    inp.min = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    inp.className = 'suggestion-date-btn';
+    row.appendChild(inp);
+    const submit = document.createElement('button');
+    submit.type = 'button';
+    submit.className = 'suggestion-btn';
+    submit.textContent = 'Выбрать';
+    submit.onclick = async () => {
+      if (busy) return;
+      busy = true;
+      if (inp.value && calendarCallback) await calendarCallback(inp.value);
+      busy = false;
+    };
+    row.appendChild(submit);
+    panel.appendChild(row);
+    calendarOpen = true;
+  }
+
+  suggestionsPanel.appendChild(panel);
+
+  if (back) {
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'suggestion-back-btn';
+    backBtn.textContent = 'Назад';
+    backBtn.onclick = async () => {
+      if (busy) return;
+      busy = true;
+      await processInput("назад");
+      busy = false;
+    };
+    suggestionsPanel.appendChild(backBtn);
+  }
+}
+
+function appendMessage(from, text) {
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `msg ${from}`;
+  const msgText = document.createElement('div');
+  msgText.className = 'msg-text';
+  msgText.innerHTML = text.replace(/\n/g, '<br>');
+  msgDiv.appendChild(msgText);
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function bot(text) { appendMessage('bot', text); }
+function user(text) { appendMessage('user', text); }
+function normalize(str) { return str.toLowerCase().replace(/[ё]/g, 'е').trim(); }
+
+function getService(input) {
+  input = normalize(input);
+  const num = parseInt(input) - 1;
+  if (!isNaN(num) && services[num]) return services[num];
+  return services.find(s => normalize(s) === input);
+}
+function getStylist(input) {
+  input = normalize(input);
+  const num = parseInt(input) - 1;
+  if (!isNaN(num) && stylists[num]) return stylists[num];
+  return stylists.find(s => normalize(s) === input);
+}
+function isValidDate(input) {
+  return /^(\d{2})[.\-](\d{2})([.\-]\d{4})?$/.test(input);
+}
+
+function dateToRuString(date) {
+  if (!(date instanceof Date)) date = new Date(date);
+  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
+}
+function toRuDate(input) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+  const [y, m, d] = input.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+function isFutureDate(input) {
+  let dt;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    dt = new Date(input);
+  } else if (/^\d{2}[.\-]\d{2}[.\-]\d{4}$/.test(input)) {
+    const parts = input.split(/[.\-]/);
+    dt = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+  } else {
+    return false;
+  }
+  const now = new Date();
+  dt.setHours(0, 0, 0, 0);
+  now.setHours(0, 0, 0, 0);
+  return dt >= now;
+}
+
+async function getFreeSlots(date, stylist) {
+  const allSlots = getTimeSlots();
+  let free = [...allSlots];
+  try {
+    const { data: bookings, error } = await supa
+      .from('bookings')
+      .select('time')
+      .eq('date', date)
+      .eq('stylist', stylist);
+    if (!error && bookings) {
+      // busy: ["10:00:00", ...]
+      const busy = bookings.map(b => (b.time.length === 8 ? b.time.substring(0, 5) : b.time));
+      free = allSlots.filter(slot => !busy.includes(slot));
+    }
+  } catch (err) {
+    console.error('getFreeSlots exception', err);
+  }
+  return free;
+}
+
+async function addBooking({ service, stylist, date, time, name, phone }) {
+  try {
+    const res = await supa
+      .from('bookings')
+      .insert([{ service, stylist, date, time, name, phone }]);
+    if (res.error) {
+      console.error('addBooking error', res.error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('addBooking exception', err);
+    return false;
+  }
+}
+
+function reset() {
+  step = 0;
+  data = {};
+  clearSuggestions();
+  // Убираем вызов showSuggestions(["Записаться"], { back: false }) здесь
+  // Вместо этого вызываем начальное сообщение и предлагаем начать
+  bot("Привет! Я виртуальный помощник парикмахерской.<br>Помогу вам записаться на услуги парикмахерской.");
+  bot("Хотите записаться на услугу?");
+  showSuggestions(["Да"], { back: false });
+}
+
+function checkCommon(input) {
+  if (["спасибо", "благодарю"].includes(normalize(input))) {
+    bot("Рады помочь! Обращайтесь 😊");
+    return true;
+  }
+  if (["пока", "до свидания", "bye", "goodbye"].includes(normalize(input))) {
+    bot("До встречи! Хорошего дня!");
+    return true;
+  }
+  if (normalize(input) === "отмена") {
+    reset();
+    return true;
+  }
+  if (normalize(input).includes("адрес")) {
+    bot("Мы находимся по адресу: ул. Примерная, д.1.");
+    return true;
+  }
+  if (normalize(input).includes("цена") || normalize(input).includes("стоимость")) {
+    bot("Стоимость уточняйте у администратора или на сайте. Базовые цены:<br>- Стрижка: 1200₽<br>- Окрашивание: 3500₽<br>- Укладка: 1000₽");
+    return true;
+  }
+  if (normalize(input).includes("режим") || normalize(input).includes("часы")) {
+    bot("Мы работаем ежедневно с 10:00 до 18:00.");
+    return true;
+  }
+  return false;
+}
+
+function formatPhoneNumber(phone) {
+  // Удаляем все нецифровые символы, кроме +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  
+  // Автоматически добавляем +7, если номер начинается с 9 и имеет 10 цифр
+  if (/^9\d{9}$/.test(cleaned)) {
+    cleaned = '+7' + cleaned;
+  }
+  // Или добавляем +7, если номер начинается с 7 (без +)
+  else if (/^7\d{10}$/.test(cleaned)) {
+    cleaned = '+' + cleaned;
+  }
+  // Или добавляем +7, если номер начинается с 8
+  else if (/^8\d{10}$/.test(cleaned)) {
+    cleaned = '+7' + cleaned.substring(1);
+  }
+  
+  // Форматируем российские номера (+7 и 11 цифр)
+  if (/^\+7\d{10}$/.test(cleaned)) {
+    const match = cleaned.match(/^(\+7)(\d{3})(\d{3})(\d{2})(\d{2})$/);
+    return `${match[1]} (${match[2]}) ${match[3]}-${match[4]}-${match[5]}`;
+  }
+  
+  // Для других форматов возвращаем как есть
+  return cleaned;
+}
+
+// ======== НОВАЯ ФУНКЦИЯ ПОВТОРА ШАГА ========
+function repeatCurrentStep() {
+  switch (step) {
+    case 0:
+      bot("Здравствуйте! Я бот-помощник парикмахерской.<br>Хотите записаться на услугу?");
+      showSuggestions(["Да"], {back: false});
+      break;
+    case 1:
+      bot("Отлично! Какую услугу вы бы хотели выбрать?");
+      showSuggestions(services);
+      break;
+    case 2:
+      bot("Кто из стилистов вас интересует?");
+      showSuggestions(stylists);
+      break;
+    case 3:
+      bot("На какую дату записать?");
+      let today = new Date();
+      let tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      let afterTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+      showSuggestions([
+        dateToRuString(tomorrow),
+        dateToRuString(afterTomorrow),
+        "Другая дата"
+      ]);
+      break;
+    case 4:
+      bot(`Свободное время на <b>${data.userInputDate}</b>:`);
+      showSuggestions(data.slots || []);
+      bot("Пожалуйста, выберите время по кнопке или введите номер из списка.");
+      break;
+    case 41:
+      bot(
+        `Вы выбрали:<br>
+         Услуга: <b>${data.service}</b><br>
+         Стилист: <b>${data.stylist}</b><br>
+         Дата: <b>${data.userInputDate}</b><br>
+         Время: <b>${data.time}</b><br>
+         Всё верно? (да / назад)`
+      );
+      showSuggestions(["Да"]);
+      break;
+    case 5:
+      bot("Пожалуйста, напишите ваше имя.");
+      showSuggestions([], {back:true});
+      break;
+    case 6:
+      bot("Пожалуйста, укажите ваш номер телефона для связи (например: +7 912 345-67-89 или 89123456789)");
+      showSuggestions([], {back:true});
+      break;
+    case 7:
+      bot(`Если хотите сделать новую запись, напишите <b>записаться</b>.`);
+      showSuggestions(["Записаться"], {back:false});
+      break;
+    default:
+      bot("Для новой записи напишите <b>записаться</b>.");
+      showSuggestions(["Записаться"], {back:false});
+      break;
+  }
+}
+
+// ========== Основная логика ==========
+
+async function processInput(input) {
+  input = input.trim();
+  if (!input) return;
+  user(input);
+  clearSuggestions();
+
+  if (normalize(input) === "назад") {
+    if (step > 0) step--;
+    if (step <= 3) {
+      data.userInputDate = null;
+      data.date = null;
+      data.slots = null;
+      data.time = null;
+    }
+    if (step <= 2) {
+      data.stylist = null;
+    }
+    repeatCurrentStep();
+    return;
+  }
+
+  // 🔧 ДОБАВЬ ЭТО ЗДЕСЬ
+  if (normalize(input) === "записаться") {
+    reset();
+    return;
+  }
+
+  if (checkCommon(input)) return;
+
+
+  switch (step) {
+    case 0: {
+  if (normalize(input) === "да" || normalize(input) === "записаться") {
+    bot("Отлично! Какую услугу вы бы хотели выбрать?");
+    showSuggestions(services);
+    step = 1;
+  } else {
+    bot("Пожалуйста, напишите <b>да</b> или используйте кнопку.");
+    showSuggestions(["Да"], { back: false });
+  }
+  break;
+}
+    case 1: {
+      let service = getService(input);
+      if (!service) {
+        bot("Пожалуйста, выберите услугу из списка по кнопке или напишите название полностью:");
+        showSuggestions(services);
+      } else {
+        data.service = service;
+        bot(`Вы выбрали: <b>${service}</b>.<br>Кто из стилистов вас интересует?`);
+        showSuggestions(stylists);
+        step = 2;
+      }
+      break;
+    }
+    case 2: {
+      let stylist = getStylist(input);
+      if (!stylist) {
+        bot("Пожалуйста, выберите стилиста по кнопке или напишите имя полностью:");
+        showSuggestions(stylists);
+      } else {
+        data.stylist = stylist;
+        bot("Отлично, <b>" + stylist + "</b>.<br>На какую дату записать?");
+        let today = new Date();
+        let tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        let afterTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+        const btns = [
+          dateToRuString(tomorrow),
+          dateToRuString(afterTomorrow),
+          "Другая дата"
+        ];
+        showSuggestions(btns);
+        step = 3;
+      }
+      break;
+    }
+    case 3: {
+      data.time = null;
+      data.slots = null;
+
+      let today = new Date();
+      let tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      let afterTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+
+      if (/^\d{1,2}:\d{2}$/.test(input.trim())) {
+        bot("Сначала выберите дату, потом появится список времени!");
+        showSuggestions([
+          dateToRuString(tomorrow),
+          dateToRuString(afterTomorrow),
+          "Другая дата"
+        ]);
+        return;
+      }
+
+      if (input === "Другая дата") {
+        bot("Выберите дату через календарь ниже.");
+        showSuggestions([], {
+          calendar: true,
+          calendarCallback: async function (val) {
+            await processInput(toRuDate(val));
+          }
+        });
+        step = 3.1;
+        return;
+      }
+      let pickedDate = null;
+      if (input === dateToRuString(tomorrow)) pickedDate = tomorrow;
+      else if (input === dateToRuString(afterTomorrow)) pickedDate = afterTomorrow;
+      else if (isValidDate(input)) {
+        const parts = input.split(/[.\-]/);
+        if (parts.length >= 2) {
+          pickedDate = new Date(parts[2] || today.getFullYear(), parts[1] - 1, parts[0]);
+        }
+      }
+
+      if (!pickedDate || !isFutureDate(formatToIso(pickedDate))) {
+        bot("Пожалуйста, выберите дату с помощью кнопки или введите корректную дату (ДД.ММ или ДД.ММ.ГГГГ).");
+        showSuggestions([
+          dateToRuString(tomorrow),
+          dateToRuString(afterTomorrow),
+          "Другая дата"
+        ]);
+        return;
+      }
+
+      data.userInputDate = toRuDate(formatToIso(pickedDate));
+      data.date = formatToIso(pickedDate);
+      data.time = null;
+
+      const freeSlots = await getFreeSlots(data.date, data.stylist);
+      if (freeSlots.length === 0) {
+        bot(`К сожалению, на <b>${data.userInputDate}</b> у стилиста <b>${data.stylist}</b> нет свободных слотов.<br>Попробуйте выбрать другую дату.`);
+        showSuggestions([
+          dateToRuString(tomorrow),
+          dateToRuString(afterTomorrow),
+          "Другая дата"
+        ]);
+      } else {
+        data.slots = freeSlots;
+        bot(`Свободное время на <b>${data.userInputDate}</b>:`);
+        showSuggestions(freeSlots);
+        bot("Пожалуйста, выберите время по кнопке или введите номер из списка.");
+        step = 4;
+      }
+      break;
+    }
+    case 3.1: {
+      data.time = null;
+      data.slots = null;
+      let inputDate = input;
+      let isoDate = inputDate;
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(inputDate)) {
+        const [d, m, y] = inputDate.split(".");
+        isoDate = `${y}-${m}-${d}`;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+        bot("Пожалуйста, выберите корректную дату.");
+        showSuggestions([], {
+          calendar: true,
+          calendarCallback: async function (val) {
+            await processInput(toRuDate(val));
+          }
+        });
+        return;
+      }
+      data.userInputDate = toRuDate(isoDate);
+      data.date = isoDate;
+      data.time = null;
+      const freeSlots = await getFreeSlots(data.date, data.stylist);
+      if (freeSlots.length === 0) {
+        bot(`К сожалению, на <b>${data.userInputDate}</b> у стилиста <b>${data.stylist}</b> нет свободных слотов.<br>Попробуйте выбрать другую дату.`);
+        let today = new Date();
+        let tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        let afterTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+        showSuggestions([
+          dateToRuString(tomorrow),
+          dateToRuString(afterTomorrow),
+          "Другая дата"
+        ]);
+        step = 3;
+      } else {
+        data.slots = freeSlots;
+        bot(`Свободное время на <b>${data.userInputDate}</b>:`);
+        showSuggestions(freeSlots);
+        bot("Пожалуйста, выберите время по кнопке или введите номер из списка.");
+        step = 4;
+      }
+      break;
+    }
+    case 4: {
+      let val = input.trim();
+
+      // === Исправлено: только если ВВЕЛИ ЧИСЛО (номер слота) — ищем по индексу
+      if (/^\d+$/.test(val)) {
+        const idx = parseInt(val, 10) - 1;
+        if (data.slots && data.slots[idx]) {
+          val = data.slots[idx];
+        }
+      }
+
+      if (!data.slots || !data.slots.includes(val)) {
+        bot("Пожалуйста, выберите время по кнопке или введите номер из списка.");
+        showSuggestions(data.slots || []);
+      } else {
+        data.time = val; // формат "HH:MM"
+        bot(
+          `Вы выбрали:<br>
+           Услуга: <b>${data.service}</b><br>
+           Стилист: <b>${data.stylist}</b><br>
+           Дата: <b>${data.userInputDate}</b><br>
+           Время: <b>${data.time}</b><br>
+           Всё верно? (да / назад)`
+        );
+        showSuggestions(["Да"]);
+        step = 41;
+      }
+      break;
+    }
+    case 41: {
+  if (normalize(input) === "да") {
+    bot("Пожалуйста, напишите ваше имя.");
+    showSuggestions([], { back: true });
+    step = 5;
+  } else if (normalize(input) === "назад") {
+    step = 4;
+    data.time = null;
+    // Загружаем актуальные свободные слоты
+    data.slots = await getFreeSlots(data.date, data.stylist);
+    // Очищаем предыдущие кнопки и показываем новые свободные слоты
+    clearSuggestions();
+    showSuggestions(data.slots || []);
+    bot("Пожалуйста, выберите время по кнопке или введите номер из списка.");
+  } else {
+    bot("Пожалуйста, ответьте <b>да</b> или используйте кнопку Назад.");
+    showSuggestions(["Да"]);
+  }
+  break;
+}
+
+
+    case 5: {
+  if (input.length < 2) {
+    bot("Пожалуйста, введите корректное имя.");
+    showSuggestions([], { back: true });
+  } else {
+    data.name = input;
+    bot("Пожалуйста, укажите ваш номер телефона для связи:<br>" +
+        "- Российский номер: 9123456789, +79123456789 или 89123456789<br>" +
+        "- Международный номер: +кодXXX...<br>" +
+        "Пример: 9123456789, +7 912 345-67-89 или +442012345678");
+    showSuggestions([], { back: true });
+    step = 6;
+  }
+  break;
+}
+    case 6: {
+  // Очищаем номер от всех символов, кроме цифр и +
+  let cleanPhone = input.replace(/[^\d+]/g, '');
+  
+  // Автоматически корректируем номер
+  if (/^9\d{9}$/.test(cleanPhone)) {
+    cleanPhone = '+7' + cleanPhone; // Преобразуем 9123456789 в +79123456789
+  } else if (/^7\d{10}$/.test(cleanPhone)) {
+    cleanPhone = '+' + cleanPhone; // Преобразуем 79123456789 в +79123456789
+  } else if (/^8\d{10}$/.test(cleanPhone)) {
+    cleanPhone = '+7' + cleanPhone.substring(1); // Преобразуем 89123456789 в +79123456789
+  }
+  
+  // Проверяем российские номера (+7 и 11 цифр)
+  const isValidRussianPhone = /^\+7\d{10}$/.test(cleanPhone);
+  
+  // Проверяем международные номера (минимум 5 цифр)
+  const isValidInternational = /^\+\d{5,}$/.test(cleanPhone);
+  
+  if (!isValidRussianPhone && !isValidInternational) {
+    bot("Пожалуйста, введите корректный номер телефона:<br>" +
+        "- Российский номер: 9123456789, +79123456789 или 89123456789<br>" +
+        "- Международный номер: +кодXXX... (минимум 5 цифр)<br>" +
+        "Пример: 9123456789, +7 912 345-67-89 или +442012345678");
+    showSuggestions([], { back: true });
+    return;
+  }
+  
+  // Если номер прошел валидацию
+  data.phone = cleanPhone;
+  const ok = await addBooking({
+    service: data.service,
+    stylist: data.stylist,
+    date: data.date,
+    time: formatTimeForDb(data.time),
+    name: data.name,
+    phone: data.phone
+  });
+  
+  if (ok) {
+    bot(
+      `Спасибо, <b>${data.name}</b>!<br><br>` +
+      `Ваша заявка:<br>` +
+      `Услуга: <b>${data.service}</b><br>` +
+      `Стилист: <b>${data.stylist}</b><br>` +
+      `Дата и время: <b>${data.userInputDate} ${data.time}</b><br>` +
+      `Телефон: <b>${formatPhoneNumber(data.phone)}</b><br><br>` +
+      `Мы свяжемся с вами для подтверждения.<br><br>Для новой записи напишите <b>записаться</b>.`
+    );
+    showSuggestions(["Записаться"], { back: false });
+  } else {
+    bot("Произошла ошибка при записи. Попробуйте позже или обратитесь администратору.");
+    showSuggestions([], { back: true });
+  }
+  step = 7;
+  break;
+}
+    case 7: {
+      if (normalize(input) === "записаться" || normalize(input) === "да") {
+        reset();
+      } else {
+        bot(`Если хотите сделать новую запись, напишите <b>записаться</b>.`);
+        showSuggestions(["Записаться"], { back: false });
+      }
+      break;
+    }
+    default: {
+      bot("Я вас не понял. Для новой записи напишите <b>записаться</b>.");
+      showSuggestions(["Записаться"], { back: false });
+      break;
+    }
+  }
+}
+
+// ========== Старт ==========
+reset();
+
+chatForm.onsubmit = async function (e) {
+  e.preventDefault();
+  if (busy) return;
+  busy = true;
+  const val = chatInput.value;
+  chatInput.value = "";
+  await processInput(val);
+  busy = false;
+};
+
+
+  </script>
+</body>
+</html>
